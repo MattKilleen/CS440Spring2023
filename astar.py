@@ -1,20 +1,24 @@
 import random
 
-def generate_random_maze(rows, cols):
-    maze = [[0 for j in range(cols)] for i in range(rows)]
-    for i in range(rows):
-        for j in range(cols):
-            if i == 0 or i == rows-1 or j == 0 or j == cols-1:
-                maze[i][j] = 0
-            else:
-                maze[i][j] = random.choice([0, 1])
-    maze[1][1] = "a"
-    maze[rows-2][cols-2] = "g"
-    return maze
+# "a" signifies the agent
+# "g" signifies the goal
+# 0 signifies a wall
+# 1 signifies no wall
 
-rows = 5
-cols = 7
-maze = generate_random_maze(rows, cols)
+def generate_random_maze(rows, cols):
+    maze = [[random.choice([0, 1]) for j in range(cols)] for i in range(rows)]
+    agent_row = random.randint(0, rows-1)
+    agent_col = random.randint(0, cols-1)
+    goal_row = random.randint(0, rows-1)
+    goal_col = random.randint(0, cols-1)
+    maze[agent_row][agent_col] = "a"
+    maze[goal_row][goal_col] = "g"
+    return maze, agent_row, agent_col, goal_row, goal_col
+
+rows = 10
+cols = 10
+maze, agent_row, agent_col, goal_row, goal_col = generate_random_maze(rows, cols)
+
 for row in maze:
     print(row)
 
