@@ -1,6 +1,5 @@
 import random
 
-
 # "a" signifies the agent
 # "g" signifies the goal
 # "0" signifies a wall
@@ -26,7 +25,7 @@ class MazeEntry:
 
 
 # Maze Class - the entire maze
-# content - a dictionary containing all MaseEntry objects within the Maze
+# content - a dictionary containing all MazeEntry objects within the Maze
 # rows, cols - dimensions of the maze
 # agent_row, agent_col - starting coordinates for the agent
 # goal_row, goal_col - coordinates for the goal
@@ -73,8 +72,10 @@ class Maze:
 
 # Perform A* search on the known maze, beginning at initial_position, and targeting goal_position
 def a_star(initial_position, goal_position, known_maze):
-    # create the initial node in the tree based on the initial_position and initialize the queue containing only the initial_node
+    # create the initial node in the tree based on the initial_position
     initial_node = MazeEntry(initial_position[0], initial_position[1], "1", 0, manhattan_distance_heuristic(initial_position, goal_position))
+
+    # initialize the queue with only the initial_node
     q = [initial_node]
 
     # initialize the list of expanded nodes (implemented using a dictionary)
@@ -108,13 +109,14 @@ def a_star(initial_position, goal_position, known_maze):
             return True, path
 
         # Find the neighbors of the current node, and for each neighbor, create a MazeEntry object to represent it,
-        # and add it to the queue in order of increasing cost plus heuristic
+        # and add it to the queue in order of increasing cost + heuristic
         for i in findNeighbors([x.row, x.col], known_maze):
             if expandedList.setdefault((i.row, i.col)) is None:
                 i.parent = x
                 i.cost = x.cost + 1
                 i.heuristic = manhattan_distance_heuristic([i.row, i.col], goal_position)
                 q = addToQueue(q, i)
+
     # If we exited from the while loop, meaning that the queue became empty without finding the goal,
     # return false, indicating failure, and an empty list
     return False, []
@@ -122,7 +124,7 @@ def a_star(initial_position, goal_position, known_maze):
 
 # Navigate through the maze
 def walk(true_maze):
-    # In addition to the true maze which we are to walk though, create a known_maze,
+    # In addition to the true maze which we are to navigate though, create a known_maze,
     # representing the maze as the agent knows it. The agent does not initially know the maze,
     # other than its starting point and the goal point. It initially assumes that no spaces contain walls.
     known_maze = Maze(rows, cols, 0, true_maze.agent_row, true_maze.agent_col, true_maze.goal_row, true_maze.goal_col)
