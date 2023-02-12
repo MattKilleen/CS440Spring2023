@@ -1,7 +1,7 @@
 import random
 
-# "a" signifies the agent
-# "g" signifies the goal
+# "A" signifies the agent
+# "G" signifies the goal
 # "0" signifies a wall
 # "1" signifies no wall
 
