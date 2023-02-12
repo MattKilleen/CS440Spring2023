@@ -70,6 +70,81 @@ class Maze:
             print(row)
 
 
+# Navigate through the maze
+def walk(true_maze):
+    # In addition to the true maze which we are to navigate though, create a known_maze,
+    # representing the maze as the agent knows it. The agent does not initially know the maze,
+    # other than its starting point and the goal point. It initially assumes that no spaces contain walls.
+    known_maze = Maze(rows, cols, 0, true_maze.agent_row, true_maze.agent_col, true_maze.goal_row, true_maze.goal_col)
+    print("Known Maze:")
+    known_maze.print()
+
+    # Initialize the current position of the agent and its goal
+    current_position = [true_maze.agent_row, true_maze.agent_col]
+    goal_position = [true_maze.goal_row, true_maze.goal_col]
+
+    # Initialize a list to hold the actual path that the agent has followed.
+    # It begins by only containing a MazeEntry object representing its starting point
+    actual_path = [MazeEntry(current_position[0], current_position[1], "0")]
+
+    # Use A* search to generate a planned path to the goal based on the current state of the known_maze
+    success, planned_path = a_star(current_position, goal_position, known_maze)
+
+    # If no path could be found, return false, indicating failure, and an empty list
+    if not success:
+        return False, []
+
+    # Iterate until the goal has been reached
+    while not (current_position[0] == true_maze.goal_row and current_position[1] == true_maze.goal_col):
+        # Search for any new walls adjacent to the agent in the true maze and update the known_maze
+        newWallFound = update_adjacent_spaces(current_position, true_maze, known_maze)
+
+        # If a new wall was found, use A* search to regenerate the planned path based on the new state of the known_maze
+        # If no path can be found, return false, indicating failure, and an empty list
+        if newWallFound:
+            success, planned_path = a_star(current_position, goal_position, known_maze)
+            if not success:
+                return False, []
+
+        # Remove the current element of the planned path and update the current position of the agent for the next iteration
+        planned_path.remove(planned_path[0])
+        current_position[0] = planned_path[0].row
+        current_position[1] = planned_path[0].col
+
+        # Add the updated current position of the agent to the actual path
+        actual_path.append(MazeEntry(current_position[0], current_position[1], "0"))
+
+    # If we break from the while loop (the agent reached the goal), return true, indicating success,
+    # and the actual path followed by the agent
+    return True, actual_path
+
+
+# Update the spaces in the known_maze which are adjacent to current_position
+# by assigning them the values of the corresponding spaces in the true_maze.
+# This allows the agent to update its understanding of where walls are in the maze.
+# If a new wall is detected, return true, indicating that regenerating the planned path is necessary.
+# Otherwise, return false.
+def update_adjacent_spaces(current_position, true_maze, known_maze):
+    newWallFound = False
+    if current_position[0] != 0:
+        if true_maze.content[(current_position[0] - 1, current_position[1])].status == "0" and known_maze.content[(current_position[0] - 1, current_position[1])].status == "1":
+            known_maze.content[(current_position[0] - 1, current_position[1])].status = "0"
+            newWallFound = True
+    if current_position[0] != true_maze.rows - 1:
+        if true_maze.content[(current_position[0] + 1, current_position[1])].status == "0" and known_maze.content[(current_position[0] + 1, current_position[1])].status == "1":
+            known_maze.content[(current_position[0] + 1, current_position[1])].status = "0"
+            newWallFound = True
+    if current_position[1] != 0:
+        if true_maze.content[(current_position[0], current_position[1] - 1)].status == "0" and known_maze.content[(current_position[0], current_position[1] - 1)].status == "1":
+            known_maze.content[(current_position[0], current_position[1] - 1)].status = "0"
+            newWallFound = True
+    if current_position[1] != true_maze.cols - 1:
+        if true_maze.content[(current_position[0], current_position[1] + 1)].status == "0" and known_maze.content[(current_position[0], current_position[1] + 1)].status == "1":
+            known_maze.content[(current_position[0], current_position[1] + 1)].status = "0"
+            newWallFound = True
+    return newWallFound
+
+
 # Perform A* search on the known maze, beginning at initial_position, and targeting goal_position
 def a_star(initial_position, goal_position, known_maze):
     # create the initial node in the tree based on the initial_position
@@ -122,99 +197,6 @@ def a_star(initial_position, goal_position, known_maze):
     return False, []
 
 
-# Navigate through the maze
-def walk(true_maze):
-    # In addition to the true maze which we are to navigate though, create a known_maze,
-    # representing the maze as the agent knows it. The agent does not initially know the maze,
-    # other than its starting point and the goal point. It initially assumes that no spaces contain walls.
-    known_maze = Maze(rows, cols, 0, true_maze.agent_row, true_maze.agent_col, true_maze.goal_row, true_maze.goal_col)
-    print("Known Maze:")
-    known_maze.print()
-
-    # Initialize the current position of the agent and its goal
-    current_position = [true_maze.agent_row, true_maze.agent_col]
-    goal_position = [true_maze.goal_row, true_maze.goal_col]
-
-    # Initialize a list to hold the actual path that the agent has followed.
-    # It begins by only containing a MazeEntry object representing its starting point
-    actual_path = [MazeEntry(current_position[0], current_position[1], "0")]
-
-    # Use A* search to generate a planned path to the goal based on the current state of the known_maze
-    success, planned_path = a_star(current_position, goal_position, known_maze)
-
-    # If no path could be found, return false, indicating failure, and an empty list
-    if not success:
-        return False, []
-
-    # Iterate until the goal has been reached
-    while not (current_position[0] == true_maze.goal_row and current_position[1] == true_maze.goal_col):
-        # Search for any new walls adjacent to the agent in the true maze and update the known_maze
-        newWallFound = update_adjacent_spaces(current_position, true_maze, known_maze)
-
-        # If a new wall was found, use A* search to regenerate the planned path based on the new state of the known_maze
-        # If no path can be found, return false, indicating failure, and an empty list
-        if newWallFound:
-            success, planned_path = a_star(current_position, goal_position, known_maze)
-            if not success:
-                return False, []
-
-        # Remove the current element of the planned path and update the current position of the agent for the next iteration
-        planned_path.remove(planned_path[0])
-        current_position[0] = planned_path[0].row
-        current_position[1] = planned_path[0].col
-
-        # Add the updated current position of the agent to the actual path
-        actual_path.append(MazeEntry(current_position[0], current_position[1], "0"))
-
-    # If we break from the while loop (the agent reached the goal), return true, indicating success,
-    # and the actual path followed by the agent
-    return True, actual_path
-
-
-# Add a new node to the queue in order of increasing cost + heuristic
-def addToQueue(q, node):
-    j = len(q)
-    q_new = []
-    for i in range(len(q)):
-        nodeValue = node.cost + node.heuristic
-        entryValue = q[i].cost + q[i].heuristic
-        if nodeValue < entryValue:
-            j = i
-            break
-    for i in range(0, j):
-        q_new.append(q[i])
-    q_new.append(node)
-    for i in range(j+1, len(q)+1):
-        q_new.append(q[i-1])
-    return q_new
-
-
-# Update the spaces in the known_maze which are adjacent to current_position
-# by assigning them the values of the corresponding spaces in the true_maze.
-# This allows the agent to update its understanding of where walls are in the maze.
-# If a new wall is detected, return true, indicating that regenerating the planned path is necessary.
-# Otherwise, return false.
-def update_adjacent_spaces(current_position, true_maze, known_maze):
-    newWallFound = False
-    if current_position[0] != 0:
-        if true_maze.content[(current_position[0] - 1, current_position[1])].status == "0" and known_maze.content[(current_position[0] - 1, current_position[1])].status == "1":
-            known_maze.content[(current_position[0] - 1, current_position[1])].status = "0"
-            newWallFound = True
-    if current_position[0] != true_maze.rows - 1:
-        if true_maze.content[(current_position[0] + 1, current_position[1])].status == "0" and known_maze.content[(current_position[0] + 1, current_position[1])].status == "1":
-            known_maze.content[(current_position[0] + 1, current_position[1])].status = "0"
-            newWallFound = True
-    if current_position[1] != 0:
-        if true_maze.content[(current_position[0], current_position[1] - 1)].status == "0" and known_maze.content[(current_position[0], current_position[1] - 1)].status == "1":
-            known_maze.content[(current_position[0], current_position[1] - 1)].status = "0"
-            newWallFound = True
-    if current_position[1] != true_maze.cols - 1:
-        if true_maze.content[(current_position[0], current_position[1] + 1)].status == "0" and known_maze.content[(current_position[0], current_position[1] + 1)].status == "1":
-            known_maze.content[(current_position[0], current_position[1] + 1)].status = "0"
-            newWallFound = True
-    return newWallFound
-
-
 # Find all neighbors of a node based on its current position and the content of the known maze
 # Any neighbors which contain a wall are ignored
 def findNeighbors(current_position, known_maze):
@@ -241,6 +223,24 @@ def manhattan_distance_heuristic(current_position, goal_position):
     else:
         y_distance = goal_position[1] - current_position[1]
     return x_distance + y_distance
+
+
+# Add a new node to the queue in order of increasing cost + heuristic
+def addToQueue(q, node):
+    j = len(q)
+    q_new = []
+    for i in range(len(q)):
+        nodeValue = node.cost + node.heuristic
+        entryValue = q[i].cost + q[i].heuristic
+        if nodeValue < entryValue:
+            j = i
+            break
+    for i in range(0, j):
+        q_new.append(q[i])
+    q_new.append(node)
+    for i in range(j+1, len(q)+1):
+        q_new.append(q[i-1])
+    return q_new
 
 
 rows = 5
