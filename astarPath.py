@@ -79,8 +79,8 @@ def walk(true_maze):
     # representing the maze as the agent knows it. The agent does not initially know the maze,
     # other than its starting point and the goal point. It initially assumes that no spaces contain walls.
     known_maze = Maze(rows, cols, 0, true_maze.agent_row, true_maze.agent_col, true_maze.goal_row, true_maze.goal_col)
-    print("Known Maze:")
-    known_maze.print()
+        #print("Known Maze:")
+        #known_maze.print()
 
     # Initialize the current position of the agent and its goal
     current_position = [true_maze.agent_row, true_maze.agent_col]
@@ -278,21 +278,41 @@ def printPath(maze, path):
 
 
 
-rows = 10
-cols = 10
+rows = 15
+cols = 35
 wallProbability = 0.25
 
-true_maze = Maze(rows, cols, wallProbability)
-print("True Maze:")
-true_maze.print()
+#true_maze = Maze(rows, cols, wallProbability)
+#print("True Maze:")
+#true_maze.print()
 
-success, path = walk(true_maze)
+#success, path = walk(true_maze)
 
-print("Success Status: " + str(success))
-print("Path:")
-for i in path:
-    i.print()
+#print("Success Status: " + str(success))
+#print("Path:")
+#for i in path:
+#    i.print()
 
-path_maze = true_maze
-print("\n\nVISUALIZED PATH:")
-printPath(path_maze, path)
+#path_maze = true_maze
+#print("\n\nVISUALIZED PATH:")
+#printPath(path_maze, path)
+
+mazes = []
+paths = []
+
+successes = 0
+
+for x in range(0, 50):
+    true_maze = Maze(rows, cols, wallProbability)
+    print("\nMAZE " + str(x))
+    print("START: (" + str(true_maze.agent_row) + ", " + str(true_maze.agent_col) + ")")
+    print("GOAL: (" + str(true_maze.goal_row) + ", " + str(true_maze.goal_col) + ")\n")
+    success, path = walk(true_maze)
+    printPath(true_maze, path)
+    print("\n(Success: " + str(success) + ")\n\n--------")
+    if (success):
+        successes += 1
+    mazes.append(true_maze)
+    paths.append(paths)
+
+print("\n\nSolved Mazes: " + str(successes))
