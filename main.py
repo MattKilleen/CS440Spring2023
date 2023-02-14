@@ -243,9 +243,9 @@ def addToQueue(q, node):
     return q_new
 
 
-rows = 5
-cols = 5
-wallProbability = 0.5
+rows = 20
+cols = 20
+wallProbability = 0.3
 
 true_maze = Maze(rows, cols, wallProbability)
 print("True Maze:")
