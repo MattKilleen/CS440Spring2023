@@ -31,4 +31,3 @@ def a_star(inital_position, goal_position, maze):
 
 def walk(maze, agent_row, agent_col, goal_row, goal_col):
     pass
-
