@@ -1,4 +1,4 @@
-import random
+import random, sys
 
 # "A" signifies the agent
 # "G" signifies the goal
@@ -302,17 +302,21 @@ paths = []
 
 successes = 0
 
-for x in range(0, 50):
-    true_maze = Maze(rows, cols, wallProbability)
-    print("\nMAZE " + str(x))
-    print("START: (" + str(true_maze.agent_row) + ", " + str(true_maze.agent_col) + ")")
-    print("GOAL: (" + str(true_maze.goal_row) + ", " + str(true_maze.goal_col) + ")\n")
-    success, path = walk(true_maze)
-    printPath(true_maze, path)
-    print("\n(Success: " + str(success) + ")\n\n--------")
-    if (success):
-        successes += 1
-    mazes.append(true_maze)
-    paths.append(paths)
+orig_stdout = sys.stdout
+with open("mazes.txt", "w") as f:
+    for x in range(0, 50):
+        sys.stdout = f
+        true_maze = Maze(rows, cols, wallProbability)
+        print("\nMAZE " + str(x))
+        print("START: (" + str(true_maze.agent_row) + ", " + str(true_maze.agent_col) + ")")
+        print("GOAL: (" + str(true_maze.goal_row) + ", " + str(true_maze.goal_col) + ")\n")
+        success, path = walk(true_maze)
+        printPath(true_maze, path)
+        print("\n(Success: " + str(success) + ")\n\n--------")
+        if (success):
+            successes += 1
+        mazes.append(true_maze)
+        paths.append(paths)
 
-print("\n\nSolved Mazes: " + str(successes))
+    print("\n\nSolved Mazes: " + str(successes))
+    sys.stdout = orig_stdout
