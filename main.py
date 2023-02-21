@@ -1,4 +1,5 @@
-import random, sys
+import random, sys, time
+
 
 # "A" signifies the agent
 # "G" signifies the goal
@@ -24,7 +25,7 @@ class MazeEntry:
         print("[" + str(self.row) + ", " + str(self.col) + "]")
 
     def get(self):
-        return(str(self.row) + "," + str(self.col))
+        return (str(self.row) + "," + str(self.col))
 
 
 # Maze Class - the entire maze
@@ -74,16 +75,15 @@ class Maze:
 
 
 # Navigate through the maze
-def forward_a_star_walk(true_maze):
-
+def forward_a_star_walk_favor_high_g_values(true_maze):
     total_expand = 0
 
     # In addition to the true maze which we are to navigate though, create a known_maze,
     # representing the maze as the agent knows it. The agent does not initially know the maze,
     # other than its starting point and the goal point. It initially assumes that no spaces contain walls.
     known_maze = Maze(rows, cols, 0, true_maze.agent_row, true_maze.agent_col, true_maze.goal_row, true_maze.goal_col)
-        #print("Known Maze:")
-        #known_maze.print()
+    # print("Known Maze:")
+    # known_maze.print()
 
     # Initialize the current position of the agent and its goal
     current_position = [true_maze.agent_row, true_maze.agent_col]
@@ -94,7 +94,7 @@ def forward_a_star_walk(true_maze):
     actual_path = [MazeEntry(current_position[0], current_position[1], "0")]
 
     # Use A* search to generate a planned path to the goal based on the current state of the known_maze
-    success, planned_path, expanded = forward_a_star(current_position, goal_position, known_maze)
+    success, planned_path, expanded = forward_a_star_favor_high_g_values(current_position, goal_position, known_maze)
 
     total_expand += expanded
 
@@ -110,7 +110,7 @@ def forward_a_star_walk(true_maze):
         # If a new wall was found, use A* search to regenerate the planned path based on the new state of the known_maze
         # If no path can be found, return false, indicating failure, and an empty list
         if newWallFound:
-            success, planned_path, expanded = forward_a_star(current_position, goal_position, known_maze)
+            success, planned_path, expanded = forward_a_star_favor_high_g_values(current_position, goal_position, known_maze)
             if not success:
                 total_expand += expanded
                 return False, [], total_expand
@@ -128,27 +128,47 @@ def forward_a_star_walk(true_maze):
     total_expand += expanded
     return True, actual_path, total_expand
 
-def adaptive_a_star_walk(true_maze):
 
+# Navigate through the maze
+def forward_a_star_walk_favor_low_g_values(true_maze):
     total_expand = 0
+
+    # In addition to the true maze which we are to navigate though, create a known_maze,
+    # representing the maze as the agent knows it. The agent does not initially know the maze,
+    # other than its starting point and the goal point. It initially assumes that no spaces contain walls.
     known_maze = Maze(rows, cols, 0, true_maze.agent_row, true_maze.agent_col, true_maze.goal_row, true_maze.goal_col)
+    # print("Known Maze:")
+    # known_maze.print()
+
+    # Initialize the current position of the agent and its goal
     current_position = [true_maze.agent_row, true_maze.agent_col]
     goal_position = [true_maze.goal_row, true_maze.goal_col]
+
+    # Initialize a list to hold the actual path that the agent has followed.
+    # It begins by only containing a MazeEntry object representing its starting point
     actual_path = [MazeEntry(current_position[0], current_position[1], "0")]
-    success, planned_path, expanded = forward_a_star(current_position, goal_position, known_maze)
+
+    # Use A* search to generate a planned path to the goal based on the current state of the known_maze
+    success, planned_path, expanded = forward_a_star_favor_low_g_values(current_position, goal_position, known_maze)
 
     total_expand += expanded
+
+    # If no path could be found, return false, indicating failure, and an empty list
     if not success:
         return False, [], total_expand
 
     # Iterate until the goal has been reached
     while not (current_position[0] == true_maze.goal_row and current_position[1] == true_maze.goal_col):
-
+        # Search for any new walls adjacent to the agent in the true maze and update the known_maze
         newWallFound = update_adjacent_spaces(current_position, true_maze, known_maze)
-        success, planned_path, expanded = forward_a_star(current_position, goal_position, known_maze)
-        if not success:
-            total_expand += expanded
-            return False, [], total_expand
+
+        # If a new wall was found, use A* search to regenerate the planned path based on the new state of the known_maze
+        # If no path can be found, return false, indicating failure, and an empty list
+        if newWallFound:
+            success, planned_path, expanded = forward_a_star_favor_low_g_values(current_position, goal_position, known_maze)
+            if not success:
+                total_expand += expanded
+                return False, [], total_expand
 
         # Remove the current element of the planned path and update the current position of the agent for the next iteration
         planned_path.remove(planned_path[0])
@@ -162,6 +182,46 @@ def adaptive_a_star_walk(true_maze):
     # and the actual path followed by the agent
     total_expand += expanded
     return True, actual_path, total_expand
+
+
+def adaptive_a_star_walk(true_maze):
+    total_expand = 0
+    known_maze = Maze(rows, cols, 0, true_maze.agent_row, true_maze.agent_col, true_maze.goal_row, true_maze.goal_col)
+    current_position = [true_maze.agent_row, true_maze.agent_col]
+    goal_position = [true_maze.goal_row, true_maze.goal_col]
+    actual_path = [MazeEntry(current_position[0], current_position[1], "0")]
+    success, planned_path, expanded = adaptive_a_star(current_position, goal_position, known_maze)
+
+    total_expand += expanded
+    if not success:
+        return False, [], total_expand
+
+    # Iterate until the goal has been reached
+    while not (current_position[0] == true_maze.goal_row and current_position[1] == true_maze.goal_col):
+        # Search for any new walls adjacent to the agent in the true maze and update the known_maze
+        newWallFound = update_adjacent_spaces(current_position, true_maze, known_maze)
+
+        # If a new wall was found, use A* search to regenerate the planned path based on the new state of the known_maze
+        # If no path can be found, return false, indicating failure, and an empty list
+        if newWallFound:
+            success, planned_path, expanded = adaptive_a_star(current_position, goal_position, known_maze)
+            if not success:
+                total_expand += expanded
+                return False, [], total_expand
+
+        # Remove the current element of the planned path and update the current position of the agent for the next iteration
+        planned_path.remove(planned_path[0])
+        current_position[0] = planned_path[0].row
+        current_position[1] = planned_path[0].col
+
+        # Add the updated current position of the agent to the actual path
+        actual_path.append(MazeEntry(current_position[0], current_position[1], "0"))
+
+    # If we break from the while loop (the agent reached the goal), return true, indicating success,
+    # and the actual path followed by the agent
+    total_expand += expanded
+    return True, actual_path, total_expand
+
 
 def backwards_a_star_walk(true_maze):
     # In addition to the true maze which we are to navigate though, create a known_maze,
@@ -219,6 +279,7 @@ def backwards_a_star_walk(true_maze):
     total_expand += expanded
     return True, actual_path, total_expand
 
+
 # Update the spaces in the known_maze which are adjacent to current_position
 # by assigning them the values of the corresponding spaces in the true_maze.
 # This allows the agent to update its understanding of where walls are in the maze.
@@ -227,28 +288,33 @@ def backwards_a_star_walk(true_maze):
 def update_adjacent_spaces(current_position, true_maze, known_maze):
     newWallFound = False
     if current_position[0] != 0:
-        if true_maze.content[(current_position[0] - 1, current_position[1])].status == "0" and known_maze.content[(current_position[0] - 1, current_position[1])].status == "1":
+        if true_maze.content[(current_position[0] - 1, current_position[1])].status == "0" and known_maze.content[
+            (current_position[0] - 1, current_position[1])].status == "1":
             known_maze.content[(current_position[0] - 1, current_position[1])].status = "0"
             newWallFound = True
     if current_position[0] != true_maze.rows - 1:
-        if true_maze.content[(current_position[0] + 1, current_position[1])].status == "0" and known_maze.content[(current_position[0] + 1, current_position[1])].status == "1":
+        if true_maze.content[(current_position[0] + 1, current_position[1])].status == "0" and known_maze.content[
+            (current_position[0] + 1, current_position[1])].status == "1":
             known_maze.content[(current_position[0] + 1, current_position[1])].status = "0"
             newWallFound = True
     if current_position[1] != 0:
-        if true_maze.content[(current_position[0], current_position[1] - 1)].status == "0" and known_maze.content[(current_position[0], current_position[1] - 1)].status == "1":
+        if true_maze.content[(current_position[0], current_position[1] - 1)].status == "0" and known_maze.content[
+            (current_position[0], current_position[1] - 1)].status == "1":
             known_maze.content[(current_position[0], current_position[1] - 1)].status = "0"
             newWallFound = True
     if current_position[1] != true_maze.cols - 1:
-        if true_maze.content[(current_position[0], current_position[1] + 1)].status == "0" and known_maze.content[(current_position[0], current_position[1] + 1)].status == "1":
+        if true_maze.content[(current_position[0], current_position[1] + 1)].status == "0" and known_maze.content[
+            (current_position[0], current_position[1] + 1)].status == "1":
             known_maze.content[(current_position[0], current_position[1] + 1)].status = "0"
             newWallFound = True
     return newWallFound
 
 
 # Perform A* search on the known maze, beginning at initial_position, and targeting goal_position
-def forward_a_star(initial_position, goal_position, known_maze):
+def forward_a_star_favor_high_g_values(initial_position, goal_position, known_maze):
     # create the initial node in the tree based on the initial_position
-    initial_node = MazeEntry(initial_position[0], initial_position[1], "1", 0, manhattan_distance_heuristic(initial_position, goal_position))
+    initial_node = MazeEntry(initial_position[0], initial_position[1], "1", 0,
+                             manhattan_distance_heuristic(initial_position, goal_position))
 
     # initialize the queue with only the initial_node
     q = [initial_node]
@@ -270,7 +336,7 @@ def forward_a_star(initial_position, goal_position, known_maze):
 
         # Add this node to the expanded list
         expandedList[(x.row, x.col)] = True
-        
+
         expanded += 1
 
         # If this node is the goal, return True, indicating success, as well as the path,
@@ -282,8 +348,8 @@ def forward_a_star(initial_position, goal_position, known_maze):
                 path.append(x)
             path.reverse()
             # Passed - A Star Test (and thus findNeighbors is verified)
-            #print("Path From Forwards A Star:")
-            #for i in path:
+            # print("Path From Forwards A Star:")
+            # for i in path:
             #   i.print()
             return True, path, expanded
 
@@ -294,11 +360,137 @@ def forward_a_star(initial_position, goal_position, known_maze):
                 i.parent = x
                 i.cost = x.cost + 1
                 i.heuristic = manhattan_distance_heuristic([i.row, i.col], goal_position)
-                q = addToQueue(q, i)
+                q = addToQueueFavorHighGValues(q, i)
 
     # If we exited from the while loop, meaning that the queue became empty without finding the goal,
     # return false, indicating failure, and an empty list
     return False, [], expanded
+
+
+# Perform A* search on the known maze, beginning at initial_position, and targeting goal_position
+def forward_a_star_favor_low_g_values(initial_position, goal_position, known_maze):
+    # create the initial node in the tree based on the initial_position
+    initial_node = MazeEntry(initial_position[0], initial_position[1], "1", 0,
+                             manhattan_distance_heuristic(initial_position, goal_position))
+
+    # initialize the queue with only the initial_node
+    q = [initial_node]
+
+    # initialize the list of expanded nodes (implemented using a dictionary)
+    expandedList = {}
+
+    expanded = 0
+
+    # Iterate as long as the queue is not empty
+    while q:
+        # Pop the first node off of the queue
+        x = q[0]
+        q.remove(x)
+
+        # If this node has already been expanded, continue to the next iteration
+        if expandedList.setdefault((x.row, x.col)) is not None:
+            continue
+
+        # Add this node to the expanded list
+        expandedList[(x.row, x.col)] = True
+
+        expanded += 1
+
+        # If this node is the goal, return True, indicating success, as well as the path,
+        # Which is obtaining by following the parents of each node, up the tree
+        if x.row == goal_position[0] and x.col == goal_position[1]:
+            path = [x]
+            while x.parent is not None:
+                x = x.parent
+                path.append(x)
+            path.reverse()
+            # Passed - A Star Test (and thus findNeighbors is verified)
+            # print("Path From Forwards A Star:")
+            # for i in path:
+            #   i.print()
+            return True, path, expanded
+
+        # Find the neighbors of the current node, and for each neighbor, create a MazeEntry object to represent it,
+        # and add it to the queue in order of increasing cost + heuristic
+        for i in findNeighbors([x.row, x.col], known_maze):
+            if expandedList.setdefault((i.row, i.col)) is None:
+                i.parent = x
+                i.cost = x.cost + 1
+                i.heuristic = manhattan_distance_heuristic([i.row, i.col], goal_position)
+                q = addToQueueFavorLowGValues(q, i)
+
+    # If we exited from the while loop, meaning that the queue became empty without finding the goal,
+    # return false, indicating failure, and an empty list
+    return False, [], expanded
+
+
+# Perform A* search on the known maze, beginning at initial_position, and targeting goal_position
+def adaptive_a_star(initial_position, goal_position, known_maze):
+    # create the initial node in the tree based on the initial_position
+    initial_node = MazeEntry(initial_position[0], initial_position[1], "1", 0,
+                             manhattan_distance_heuristic(initial_position, goal_position))
+
+    # initialize the queue with only the initial_node
+    q = [initial_node]
+
+    # initialize the list of expanded nodes (implemented using a dictionary)
+    expandedList = {}
+
+    expanded = 0
+
+    # Iterate as long as the queue is not empty
+    while q:
+        # Pop the first node off of the queue
+        x = q[0]
+        q.remove(x)
+
+        # If this node has already been expanded, continue to the next iteration
+        if expandedList.setdefault((x.row, x.col)) is not None:
+            continue
+
+        # Add this node to the expanded list
+        expandedList[(x.row, x.col)] = True
+
+        expanded += 1
+
+        # If this node is the goal, return True, indicating success, as well as the path,
+        # Which is obtaining by following the parents of each node, up the tree
+        if x.row == goal_position[0] and x.col == goal_position[1]:
+            path = [x]
+            while x.parent is not None:
+                x = x.parent
+                path.append(x)
+            path.reverse()
+            # Update Every Expanded Node According to Adaptive A* Search
+            # By Overwriting It With an Identical Node But With Heuristic Defined as goal_cost - cost
+            # (In Accordance With Adaptive A* Heuristic Update Equation)
+            for i in expandedList:
+                status = known_maze.content[(i[0], i[1])].status
+                cost = known_maze.content[(i[0], i[1])].cost
+                if cost is None:
+                    cost = 0
+                goal_cost = len(path) - 1
+                known_maze.content[(i[0], i[1])] = MazeEntry(i[0], i[1], status, cost, goal_cost - cost)
+            # Passed - A Star Test (and thus findNeighbors is verified)
+            # print("Path From Forwards A Star:")
+            # for i in path:
+            #   i.print()
+            return True, path, expanded
+
+        # Find the neighbors of the current node, and for each neighbor, create a MazeEntry object to represent it,
+        # and add it to the queue in order of increasing cost + heuristic
+        for i in findNeighbors([x.row, x.col], known_maze):
+            if expandedList.setdefault((i.row, i.col)) is None:
+                i.parent = x
+                i.cost = x.cost + 1
+                if i.heuristic is None:
+                    i.heuristic = manhattan_distance_heuristic([i.row, i.col], goal_position)
+                q = addToQueueFavorHighGValues(q, i)
+
+    # If we exited from the while loop, meaning that the queue became empty without finding the goal,
+    # return false, indicating failure, and an empty list
+    return False, [], expanded
+
 
 def backwards_a_star(initial_position, goal_position, known_maze):
     # create the initial node in the tree based on the initial_position
@@ -336,8 +528,8 @@ def backwards_a_star(initial_position, goal_position, known_maze):
                 path.append(x)
             path.reverse()
             # Passed - A Star Test (and thus findNeighbors is verified)
-            #print("Path From Backwards A Star:")
-            #for i in path:
+            # print("Path From Backwards A Star:")
+            # for i in path:
             #   i.print()
             return True, path, expanded
 
@@ -348,7 +540,7 @@ def backwards_a_star(initial_position, goal_position, known_maze):
                 i.parent = x
                 i.cost = x.cost + 1
                 i.heuristic = manhattan_distance_heuristic([i.row, i.col], initial_position)
-                q = addToQueue(q, i)
+                q = addToQueueFavorHighGValues(q, i)
 
     # If we exited from the while loop, meaning that the queue became empty without finding the goal,
     # return false, indicating failure, and an empty list
@@ -361,11 +553,13 @@ def findNeighbors(current_position, known_maze):
     neighbors = []
     if current_position[0] != 0 and known_maze.content[(current_position[0] - 1, current_position[1])].status != "0":
         neighbors.append(MazeEntry(current_position[0] - 1, current_position[1], "1"))
-    if current_position[0] != known_maze.rows - 1 and known_maze.content[(current_position[0] + 1, current_position[1])].status != "0":
+    if current_position[0] != known_maze.rows - 1 and known_maze.content[
+        (current_position[0] + 1, current_position[1])].status != "0":
         neighbors.append(MazeEntry(current_position[0] + 1, current_position[1], "1"))
     if current_position[1] != 0 and known_maze.content[(current_position[0], current_position[1] - 1)].status != "0":
         neighbors.append(MazeEntry(current_position[0], current_position[1] - 1, "1"))
-    if current_position[1] != known_maze.cols - 1 and known_maze.content[(current_position[0], current_position[1] + 1)].status != "0":
+    if current_position[1] != known_maze.cols - 1 and known_maze.content[
+        (current_position[0], current_position[1] + 1)].status != "0":
         neighbors.append(MazeEntry(current_position[0], current_position[1] + 1, "1"))
     return neighbors
 
@@ -384,20 +578,40 @@ def manhattan_distance_heuristic(current_position, goal_position):
 
 
 # Add a new node to the queue in order of increasing cost + heuristic
-def addToQueue(q, node):
+def addToQueueFavorHighGValues(q, node):
     j = len(q)
     q_new = []
     for i in range(len(q)):
         nodeValue = node.cost + node.heuristic
         entryValue = q[i].cost + q[i].heuristic
-        if nodeValue < entryValue:
+        # Favor higher cost (g-value)
+        if nodeValue < entryValue or nodeValue == entryValue and node.cost > q[i].cost:
             j = i
             break
     for i in range(0, j):
         q_new.append(q[i])
     q_new.append(node)
-    for i in range(j+1, len(q)+1):
-        q_new.append(q[i-1])
+    for i in range(j + 1, len(q) + 1):
+        q_new.append(q[i - 1])
+    return q_new
+
+
+# Add a new node to the queue in order of increasing cost + heuristic
+def addToQueueFavorLowGValues(q, node):
+    j = len(q)
+    q_new = []
+    for i in range(len(q)):
+        nodeValue = node.cost + node.heuristic
+        entryValue = q[i].cost + q[i].heuristic
+        # Favor lower cost (g-value)
+        if nodeValue < entryValue or nodeValue == entryValue and node.cost < q[i].cost:
+            j = i
+            break
+    for i in range(0, j):
+        q_new.append(q[i])
+    q_new.append(node)
+    for i in range(j + 1, len(q) + 1):
+        q_new.append(q[i - 1])
     return q_new
 
 
@@ -407,13 +621,13 @@ def printPath(maze, path):
     for i in range(maze.rows):
         strRow = ""
         for j in range(maze.cols):
-            if(maze.content[(i, j)].status == "1"):
-                strRow += "░"
-            if(maze.content[(i, j)].status == "0"):
-                strRow += "█"
-            if(maze.content[(i, j)].status == "A"):
+            if (maze.content[(i, j)].status == "1"):
+                strRow += "\u2591"
+            if (maze.content[(i, j)].status == "0"):
+                strRow += "\u2588"
+            if (maze.content[(i, j)].status == "A"):
                 strRow += "A"
-            if(maze.content[(i, j)].status == "G"):
+            if (maze.content[(i, j)].status == "G"):
                 strRow += "G"
         row.append(strRow)
 
@@ -426,64 +640,100 @@ def printPath(maze, path):
         yCoords.append(y)
 
     for index, x in enumerate(xCoords):
-        row[x] = row[x][:yCoords[index]] + "▒" + row[x][yCoords[index] + 1:]
+        row[x] = row[x][:yCoords[index]] + "\u2592" + row[x][yCoords[index] + 1:]
 
     for i in row:
         print(i)
 
 
-
-rows = 101
-cols = 101
+rows = 15
+cols = 30
 wallProbability = 0.25
 
-#true_maze = Maze(rows, cols, wallProbability)
-#print("True Maze:")
-#true_maze.print()
+# true_maze = Maze(rows, cols, wallProbability)
+# print("True Maze:")
+# true_maze.print()
 
-#success, path = walk(true_maze)
+# success, path = walk(true_maze)
 
-#print("Success Status: " + str(success))
-#print("Path:")
-#for i in path:
+# print("Success Status: " + str(success))
+# print("Path:")
+# for i in path:
 #    i.print()
 
-#path_maze = true_maze
-#print("\n\nVISUALIZED PATH:")
-#printPath(path_maze, path)
+# path_maze = true_maze
+# print("\n\nVISUALIZED PATH:")
+# printPath(path_maze, path)
 
 mazes = []
 paths = []
 
 successes = 0
+total_mazes = 1000
+
+total_fhexpand = 0
+total_flexpand = 0
+total_bexpand = 0
+total_aexpand = 0
+
+total_fhtime = 0
+total_fltime = 0
+total_btime = 0
+total_atime = 0
+
 
 orig_stdout = sys.stdout
 with open("mazes.txt", "w") as f:
     sys.stdout = f
-    for x in range(0, 10):
+    for x in range(0, total_mazes):
         true_maze = Maze(rows, cols, wallProbability)
         print("\nMAZE " + str(x))
         print("START: (" + str(true_maze.agent_row) + ", " + str(true_maze.agent_col) + ")")
         print("GOAL: (" + str(true_maze.goal_row) + ", " + str(true_maze.goal_col) + ")\n")
-        fsuccess, fpath, fexpand = forward_a_star_walk(true_maze)
+        fhstart_time = time.time()
+        fhsuccess, fhpath, fhexpand = forward_a_star_walk_favor_high_g_values(true_maze)
+        total_fhtime += time.time() - fhstart_time
+        total_fhexpand += fhexpand
+        flstart_time = time.time()
+        flsuccess, flpath, flexpand = forward_a_star_walk_favor_low_g_values(true_maze)
+        total_fltime += time.time() - flstart_time
+        total_flexpand += flexpand
+        bstart_time = time.time()
         bsuccess, bpath, bexpand = backwards_a_star_walk(true_maze)
+        total_btime += time.time() - bstart_time
+        total_bexpand += bexpand
+        astart_time = time.time()
         asuccess, apath, aexpand = adaptive_a_star_walk(true_maze)
-        print("Was maze a success: " + str(fsuccess))
-        print("\n(Forward)\n")
-        printPath(true_maze, fpath)
-        #print("Total Expanded Nodes: " + str(fexpand) + "\n")
+        total_atime += time.time() - astart_time
+        total_aexpand += aexpand
+        print("Was maze a success: " + str(fhsuccess))
+        print("\n(Forward Favoring High G Values)\n")
+        printPath(true_maze, fhpath)
+        print("\n(Forward Favoring Low G Values)\n")
+        printPath(true_maze, flpath)
         print("\n(Backward)\n")
         printPath(true_maze, bpath)
-        #print("Total Expanded Nodes: " + str(bexpand) + "\n")
         print("\n(Adaptive)\n")
         printPath(true_maze, apath)
-        print("Forward Expanded Nodes: " + str(fexpand) + " // Backward Expanded Nodes: " + str(bexpand) +
-              " // Adaptive Expanded Nodes: " + str(aexpand) +"\n--------")
-        #print("\n(Success: " + str(success) + ")\n\n--------")
-        if (fsuccess or bsuccess or asuccess):
+        print("Forward Expanded Nodes (Favoring High G Values): " + str(fhexpand) +
+              " // Forward Expanded Nodes (Favoring Low G Values): " + str(flexpand) +
+              " \nBackward Expanded Nodes: " + str(bexpand) +
+              " // Adaptive Expanded Nodes: " + str(aexpand) + "\n--------")
+        if fhsuccess or flsuccess or bsuccess or asuccess:
             successes += 1
         mazes.append(true_maze)
         paths.append(paths)
 
     print("\n\nSolved Mazes: " + str(successes))
+
+    print("\n\nOverall Statistics:")
+    print("Average Number of Expanded Cells per Maze for Forward Favoring High G Values = " + str(total_fhexpand / total_mazes))
+    print("Average Time per Maze for Forward Favoring High G Values = " + str(total_fhtime / total_mazes) + " seconds")
+    print("Average Number of Expanded Cells per Maze for Forward Favoring Low G Values = " + str(total_flexpand / total_mazes))
+    print("Average Time per Maze for Forward Favoring Low G Values = " + str(total_fltime / total_mazes) + " seconds")
+    print("Average Number of Expanded Cells per Maze for Backward = " + str(total_bexpand / total_mazes))
+    print("Average Time per Maze for Backward = " + str(total_btime / total_mazes) + " seconds")
+    print("Average Number of Expanded Cells per Maze for Adaptive = " + str(total_aexpand / total_mazes))
+    print("Average Time per Maze for Adaptive = " + str(total_atime / total_mazes) + " seconds")
+
     sys.stdout = orig_stdout
