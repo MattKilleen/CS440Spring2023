@@ -145,14 +145,17 @@ def backwards_a_star_walk(true_maze):
         return False, []
 
     # Iterate until the goal has been reached
-    while not (goal_position[0] == true_maze.goal_row and goal_position[1] == true_maze.goal_col):
+    while not (goal_position[0] == true_maze.agent_row and goal_position[1] == true_maze.agent_col):
         # Search for any new walls adjacent to the agent in the true maze and update the known_maze
         newWallFound = update_adjacent_spaces(goal_position, true_maze, known_maze)
 
         # If a new wall was found, use A* search to regenerate the planned path based on the new state of the known_maze
         # If no path can be found, return false, indicating failure, and an empty list
         if newWallFound:
-            success, planned_path = backwards_a_star(current_position, goal_position, known_maze)
+            try:
+                success, planned_path = backwards_a_star(current_position, goal_position, known_maze)
+            except:
+                print()
             if not success:
                 return False, []
 
@@ -162,7 +165,7 @@ def backwards_a_star_walk(true_maze):
         goal_position[1] = planned_path[0].col
 
         # Add the updated current position of the agent to the actual path
-        actual_path.append(MazeEntry(current_position[0], current_position[1], "0"))
+        actual_path.append(MazeEntry(goal_position[0], goal_position[1], "0"))
 
     # If we break from the while loop (the agent reached the goal), return true, indicating success,
     # and the actual path followed by the agent
@@ -227,9 +230,9 @@ def forward_a_star(initial_position, goal_position, known_maze):
                 path.append(x)
             path.reverse()
             # Passed - A Star Test (and thus findNeighbors is verified)
-            # print("Path From A Star:")
-            # for i in path:
-            #    i.print()
+            print("Path From Forwards A Star:")
+            for i in path:
+               i.print()
             return True, path
 
         # Find the neighbors of the current node, and for each neighbor, create a MazeEntry object to represent it,
@@ -278,9 +281,9 @@ def backwards_a_star(initial_position, goal_position, known_maze):
                 path.append(x)
             path.reverse()
             # Passed - A Star Test (and thus findNeighbors is verified)
-            # print("Path From A Star:")
-            # for i in path:
-            #    i.print()
+            print("Path From Backwards A Star:")
+            for i in path:
+               i.print()
             return True, path
 
         # Find the neighbors of the current node, and for each neighbor, create a MazeEntry object to represent it,
