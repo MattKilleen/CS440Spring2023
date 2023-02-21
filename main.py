@@ -1,4 +1,4 @@
-import random
+import random, sys
 
 # "A" signifies the agent
 # "G" signifies the goal
@@ -22,6 +22,9 @@ class MazeEntry:
 
     def print(self):
         print("[" + str(self.row) + ", " + str(self.col) + "]")
+
+    def get(self):
+        return(str(self.row) + "," + str(self.col))
 
 
 # Maze Class - the entire maze
@@ -71,13 +74,16 @@ class Maze:
 
 
 # Navigate through the maze
-def walk(true_maze):
+def forward_a_star_walk(true_maze):
+
+    total_expand = 0
+
     # In addition to the true maze which we are to navigate though, create a known_maze,
     # representing the maze as the agent knows it. The agent does not initially know the maze,
     # other than its starting point and the goal point. It initially assumes that no spaces contain walls.
     known_maze = Maze(rows, cols, 0, true_maze.agent_row, true_maze.agent_col, true_maze.goal_row, true_maze.goal_col)
-    print("Known Maze:")
-    known_maze.print()
+        #print("Known Maze:")
+        #known_maze.print()
 
     # Initialize the current position of the agent and its goal
     current_position = [true_maze.agent_row, true_maze.agent_col]
@@ -88,11 +94,13 @@ def walk(true_maze):
     actual_path = [MazeEntry(current_position[0], current_position[1], "0")]
 
     # Use A* search to generate a planned path to the goal based on the current state of the known_maze
-    success, planned_path = a_star(current_position, goal_position, known_maze)
+    success, planned_path, expanded = forward_a_star(current_position, goal_position, known_maze)
+
+    total_expand += expanded
 
     # If no path could be found, return false, indicating failure, and an empty list
     if not success:
-        return False, []
+        return False, [], total_expand
 
     # Iterate until the goal has been reached
     while not (current_position[0] == true_maze.goal_row and current_position[1] == true_maze.goal_col):
@@ -102,9 +110,10 @@ def walk(true_maze):
         # If a new wall was found, use A* search to regenerate the planned path based on the new state of the known_maze
         # If no path can be found, return false, indicating failure, and an empty list
         if newWallFound:
-            success, planned_path = a_star(current_position, goal_position, known_maze)
+            success, planned_path, expanded = forward_a_star(current_position, goal_position, known_maze)
             if not success:
-                return False, []
+                total_expand += expanded
+                return False, [], total_expand
 
         # Remove the current element of the planned path and update the current position of the agent for the next iteration
         planned_path.remove(planned_path[0])
@@ -116,8 +125,64 @@ def walk(true_maze):
 
     # If we break from the while loop (the agent reached the goal), return true, indicating success,
     # and the actual path followed by the agent
-    return True, actual_path
+    total_expand += expanded
+    return True, actual_path, total_expand
 
+def backwards_a_star_walk(true_maze):
+    # In addition to the true maze which we are to navigate though, create a known_maze,
+    # representing the maze as the agent knows it. The agent does not initially know the maze,
+    # other than its starting point and the goal point. It initially assumes that no spaces contain walls.
+    known_maze = Maze(rows, cols, 0, true_maze.agent_row, true_maze.agent_col, true_maze.goal_row, true_maze.goal_col)
+    # print("Known Maze:")
+    # known_maze.print()
+
+    total_expand = 0
+
+    # Initialize the current position of the agent and its goal
+    current_position = [true_maze.agent_row, true_maze.agent_col]
+    goal_position = [true_maze.goal_row, true_maze.goal_col]
+
+    # Initialize a list to hold the actual path that the agent has followed.
+    # It begins by only containing a MazeEntry object representing its starting point
+    actual_path = [MazeEntry(goal_position[0], goal_position[1], "0")]
+
+    # Use A* search to generate a planned path to the goal based on the current state of the known_maze
+    success, planned_path, expanded = backwards_a_star(current_position, goal_position, known_maze)
+
+    total_expand += expanded
+
+    # If no path could be found, return false, indicating failure, and an empty list
+    if not success:
+        return False, []
+
+    # Iterate until the goal has been reached
+    while not (goal_position[0] == true_maze.agent_row and goal_position[1] == true_maze.agent_col):
+        # Search for any new walls adjacent to the agent in the true maze and update the known_maze
+        newWallFound = update_adjacent_spaces(goal_position, true_maze, known_maze)
+
+        # If a new wall was found, use A* search to regenerate the planned path based on the new state of the known_maze
+        # If no path can be found, return false, indicating failure, and an empty list
+        if newWallFound:
+            try:
+                success, planned_path, expanded = backwards_a_star(current_position, goal_position, known_maze)
+            except:
+                print()
+            if not success:
+                total_expand += expanded
+                return False, [], total_expand
+
+        # Remove the current element of the planned path and update the current position of the agent for the next iteration
+        planned_path.remove(planned_path[0])
+        goal_position[0] = planned_path[0].row
+        goal_position[1] = planned_path[0].col
+
+        # Add the updated current position of the agent to the actual path
+        actual_path.append(MazeEntry(goal_position[0], goal_position[1], "0"))
+
+    # If we break from the while loop (the agent reached the goal), return true, indicating success,
+    # and the actual path followed by the agent
+    total_expand += expanded
+    return True, actual_path, total_expand
 
 # Update the spaces in the known_maze which are adjacent to current_position
 # by assigning them the values of the corresponding spaces in the true_maze.
@@ -146,7 +211,7 @@ def update_adjacent_spaces(current_position, true_maze, known_maze):
 
 
 # Perform A* search on the known maze, beginning at initial_position, and targeting goal_position
-def a_star(initial_position, goal_position, known_maze):
+def forward_a_star(initial_position, goal_position, known_maze):
     # create the initial node in the tree based on the initial_position
     initial_node = MazeEntry(initial_position[0], initial_position[1], "1", 0, manhattan_distance_heuristic(initial_position, goal_position))
 
@@ -155,6 +220,8 @@ def a_star(initial_position, goal_position, known_maze):
 
     # initialize the list of expanded nodes (implemented using a dictionary)
     expandedList = {}
+
+    expanded = 0
 
     # Iterate as long as the queue is not empty
     while q:
@@ -168,6 +235,8 @@ def a_star(initial_position, goal_position, known_maze):
 
         # Add this node to the expanded list
         expandedList[(x.row, x.col)] = True
+        
+        expanded += 1
 
         # If this node is the goal, return True, indicating success, as well as the path,
         # Which is obtaining by following the parents of each node, up the tree
@@ -178,10 +247,10 @@ def a_star(initial_position, goal_position, known_maze):
                 path.append(x)
             path.reverse()
             # Passed - A Star Test (and thus findNeighbors is verified)
-            #print("Path From A Star:")
+            #print("Path From Forwards A Star:")
             #for i in path:
-            #    i.print()
-            return True, path
+            #   i.print()
+            return True, path, expanded
 
         # Find the neighbors of the current node, and for each neighbor, create a MazeEntry object to represent it,
         # and add it to the queue in order of increasing cost + heuristic
@@ -194,7 +263,61 @@ def a_star(initial_position, goal_position, known_maze):
 
     # If we exited from the while loop, meaning that the queue became empty without finding the goal,
     # return false, indicating failure, and an empty list
-    return False, []
+    return False, [], expanded
+
+def backwards_a_star(initial_position, goal_position, known_maze):
+    # create the initial node in the tree based on the initial_position
+    initial_node = MazeEntry(goal_position[0], goal_position[1], "1", 0,
+                             manhattan_distance_heuristic(goal_position, initial_position))
+
+    # initialize the queue with only the initial_node
+    q = [initial_node]
+
+    # initialize the list of expanded nodes (implemented using a dictionary)
+    expandedList = {}
+
+    expanded = 0
+
+    # Iterate as long as the queue is not empty
+    while q:
+        # Pop the first node off of the queue
+        x = q[0]
+        q.remove(x)
+
+        # If this node has already been expanded, continue to the next iteration
+        if expandedList.setdefault((x.row, x.col)) is not None:
+            continue
+
+        # Add this node to the expanded list
+        expandedList[(x.row, x.col)] = True
+        expanded += 1
+
+        # If this node is the goal, return True, indicating success, as well as the path,
+        # Which is obtaining by following the parents of each node, up the tree
+        if x.row == initial_position[0] and x.col == initial_position[1]:
+            path = [x]
+            while x.parent is not None:
+                x = x.parent
+                path.append(x)
+            path.reverse()
+            # Passed - A Star Test (and thus findNeighbors is verified)
+            #print("Path From Backwards A Star:")
+            #for i in path:
+            #   i.print()
+            return True, path, expanded
+
+        # Find the neighbors of the current node, and for each neighbor, create a MazeEntry object to represent it,
+        # and add it to the queue in order of increasing cost + heuristic
+        for i in findNeighbors([x.row, x.col], known_maze):
+            if expandedList.setdefault((i.row, i.col)) is None:
+                i.parent = x
+                i.cost = x.cost + 1
+                i.heuristic = manhattan_distance_heuristic([i.row, i.col], initial_position)
+                q = addToQueue(q, i)
+
+    # If we exited from the while loop, meaning that the queue became empty without finding the goal,
+    # return false, indicating failure, and an empty list
+    return False, [], expanded
 
 
 # Find all neighbors of a node based on its current position and the content of the known maze
@@ -243,32 +366,85 @@ def addToQueue(q, node):
     return q_new
 
 
-rows = 20
-cols = 20
-wallProbability = 0.3
+# PRINTS THE VISUAL PATH
+def printPath(maze, path):
+    row = []
+    for i in range(maze.rows):
+        strRow = ""
+        for j in range(maze.cols):
+            if(maze.content[(i, j)].status == "1"):
+                strRow += "░"
+            if(maze.content[(i, j)].status == "0"):
+                strRow += "█"
+            if(maze.content[(i, j)].status == "A"):
+                strRow += "A"
+            if(maze.content[(i, j)].status == "G"):
+                strRow += "G"
+        row.append(strRow)
 
-true_maze = Maze(rows, cols, wallProbability)
-print("True Maze:")
-true_maze.print()
+    xCoords = []
+    yCoords = []
+    for node in path[1:-1]:
+        temp = node.get()
+        x, y = map(int, temp.split(","))
+        xCoords.append(x)
+        yCoords.append(y)
 
-success, path = walk(true_maze)
+    for index, x in enumerate(xCoords):
+        row[x] = row[x][:yCoords[index]] + "▒" + row[x][yCoords[index] + 1:]
 
-print("Success Status: " + str(success))
-print("Path:")
-for i in path:
-    i.print()
+    for i in row:
+        print(i)
 
-# Passed - Manhattan Test
-#print("Manhattan Test:")
-#print(manhattan_distance_heuristic([3,4],[0,4]))
 
-# Passed - Add to Queue Test
-#print("AddToQueue Test:")
-#entry1 = MazeEntry(1,1,"1",0,1)
-#entry2 = MazeEntry(2,2,"1",1,2)
-#entry3 = MazeEntry(3,3,"1",2,3)
-#entry4 = MazeEntry(4,4,"1",4,6)
-#q = [entry1, entry2, entry3, entry4]
-#q = addToQueue(q, MazeEntry(5,5,"1",1,3))
-#for i in q:
+
+rows = 15
+cols = 30
+wallProbability = 0.25
+
+#true_maze = Maze(rows, cols, wallProbability)
+#print("True Maze:")
+#true_maze.print()
+
+#success, path = walk(true_maze)
+
+#print("Success Status: " + str(success))
+#print("Path:")
+#for i in path:
 #    i.print()
+
+#path_maze = true_maze
+#print("\n\nVISUALIZED PATH:")
+#printPath(path_maze, path)
+
+mazes = []
+paths = []
+
+successes = 0
+
+orig_stdout = sys.stdout
+with open("mazes.txt", "w") as f:
+    sys.stdout = f
+    for x in range(0, 10):
+        true_maze = Maze(rows, cols, wallProbability)
+        print("\nMAZE " + str(x))
+        print("START: (" + str(true_maze.agent_row) + ", " + str(true_maze.agent_col) + ")")
+        print("GOAL: (" + str(true_maze.goal_row) + ", " + str(true_maze.goal_col) + ")\n")
+        fsuccess, fpath, fexpand = forward_a_star_walk(true_maze)
+        bsuccess, bpath, bexpand = backwards_a_star_walk(true_maze)
+        print("Was maze a success: " + str(fsuccess))
+        print("\n(Forward)\n")
+        printPath(true_maze, fpath)
+        #print("Total Expanded Nodes: " + str(fexpand) + "\n")
+        print("\n(Backward)\n")
+        printPath(true_maze, bpath)
+        #print("Total Expanded Nodes: " + str(bexpand) + "\n")
+        print("Forward Expanded Nodes: " + str(fexpand) + " // Backward Expanded Nodes: " + str(bexpand) + "\n--------")
+        #print("\n(Success: " + str(success) + ")\n\n--------")
+        if (fsuccess or bsuccess):
+            successes += 1
+        mazes.append(true_maze)
+        paths.append(paths)
+
+    print("\n\nSolved Mazes: " + str(successes))
+    sys.stdout = orig_stdout
