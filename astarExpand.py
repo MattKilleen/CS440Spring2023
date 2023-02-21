@@ -111,8 +111,8 @@ def forward_a_star_walk(true_maze):
         # If no path can be found, return false, indicating failure, and an empty list
         if newWallFound:
             success, planned_path, expanded = forward_a_star(current_position, goal_position, known_maze)
-            total_expand += expanded
             if not success:
+                total_expand += expanded
                 return False, [], total_expand
 
         # Remove the current element of the planned path and update the current position of the agent for the next iteration
@@ -125,6 +125,7 @@ def forward_a_star_walk(true_maze):
 
     # If we break from the while loop (the agent reached the goal), return true, indicating success,
     # and the actual path followed by the agent
+    total_expand += expanded
     return True, actual_path, total_expand
 
 def backwards_a_star_walk(true_maze):
@@ -164,10 +165,10 @@ def backwards_a_star_walk(true_maze):
         if newWallFound:
             try:
                 success, planned_path, expanded = backwards_a_star(current_position, goal_position, known_maze)
-                total_expand += expanded
             except:
                 print()
             if not success:
+                total_expand += expanded
                 return False, [], total_expand
 
         # Remove the current element of the planned path and update the current position of the agent for the next iteration
@@ -180,6 +181,7 @@ def backwards_a_star_walk(true_maze):
 
     # If we break from the while loop (the agent reached the goal), return true, indicating success,
     # and the actual path followed by the agent
+    total_expand += expanded
     return True, actual_path, total_expand
 
 # Update the spaces in the known_maze which are adjacent to current_position
@@ -429,10 +431,11 @@ for x in range(0, 2):
     bsuccess, bpath, bexpand = backwards_a_star_walk(true_maze)
     print("\n(Forward)\n")
     printPath(true_maze, fpath)
-    print("Total Expanded Nodes: " + str(fexpand) + "\n")
+    #print("Total Expanded Nodes: " + str(fexpand) + "\n")
     print("\n(Backward)\n")
     printPath(true_maze, bpath)
-    print("Total Expanded Nodes: " + str(bexpand) + "\n")
+    #print("Total Expanded Nodes: " + str(bexpand) + "\n")
+    print("Forward Expanded Nodes: " + str(fexpand) + " // Backward Expanded Nodes: " + str(bexpand) + "\n--------")
     #print("\n(Success: " + str(success) + ")\n\n--------")
     #if (success):
     #    successes += 1
