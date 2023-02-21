@@ -190,7 +190,7 @@ def adaptive_a_star_walk(true_maze):
     current_position = [true_maze.agent_row, true_maze.agent_col]
     goal_position = [true_maze.goal_row, true_maze.goal_col]
     actual_path = [MazeEntry(current_position[0], current_position[1], "0")]
-    success, planned_path, expanded = forward_a_star_favor_high_g_values(current_position, goal_position, known_maze)
+    success, planned_path, expanded = adaptive_a_star(current_position, goal_position, known_maze)
 
     total_expand += expanded
     if not success:
@@ -198,12 +198,16 @@ def adaptive_a_star_walk(true_maze):
 
     # Iterate until the goal has been reached
     while not (current_position[0] == true_maze.goal_row and current_position[1] == true_maze.goal_col):
-
+        # Search for any new walls adjacent to the agent in the true maze and update the known_maze
         newWallFound = update_adjacent_spaces(current_position, true_maze, known_maze)
-        success, planned_path, expanded = forward_a_star_favor_high_g_values(current_position, goal_position, known_maze)
-        if not success:
-            total_expand += expanded
-            return False, [], total_expand
+
+        # If a new wall was found, use A* search to regenerate the planned path based on the new state of the known_maze
+        # If no path can be found, return false, indicating failure, and an empty list
+        if newWallFound:
+            success, planned_path, expanded = adaptive_a_star(current_position, goal_position, known_maze)
+            if not success:
+                total_expand += expanded
+                return False, [], total_expand
 
         # Remove the current element of the planned path and update the current position of the agent for the next iteration
         planned_path.remove(planned_path[0])
@@ -458,8 +462,15 @@ def adaptive_a_star(initial_position, goal_position, known_maze):
                 path.append(x)
             path.reverse()
             # Update Every Expanded Node According to Adaptive A* Search
+            # By Overwriting It With an Identical Node But With Heuristic Defined as goal_cost - cost
+            # (In Accordance With Adaptive A* Heuristic Update Equation)
             for i in expandedList:
-                i.heuristic = len(path) - 1 - i.cost
+                status = known_maze.content[(i[0], i[1])].status
+                cost = known_maze.content[(i[0], i[1])].cost
+                if cost is None:
+                    cost = 0
+                goal_cost = len(path) - 1
+                known_maze.content[(i[0], i[1])] = MazeEntry(i[0], i[1], status, cost, goal_cost - cost)
             # Passed - A Star Test (and thus findNeighbors is verified)
             # print("Path From Forwards A Star:")
             # for i in path:
@@ -658,7 +669,7 @@ mazes = []
 paths = []
 
 successes = 0
-total_mazes = 100
+total_mazes = 1000
 
 total_fhexpand = 0
 total_flexpand = 0
@@ -669,6 +680,7 @@ total_fhtime = 0
 total_fltime = 0
 total_btime = 0
 total_atime = 0
+
 
 orig_stdout = sys.stdout
 with open("mazes.txt", "w") as f:
@@ -707,7 +719,7 @@ with open("mazes.txt", "w") as f:
               " // Forward Expanded Nodes (Favoring Low G Values): " + str(flexpand) +
               " // Backward Expanded Nodes: " + str(bexpand) +
               " // Adaptive Expanded Nodes: " + str(aexpand) + "\n--------")
-        if (fhsuccess or flsuccess or bsuccess or asuccess):
+        if fhsuccess or flsuccess or bsuccess or asuccess:
             successes += 1
         mazes.append(true_maze)
         paths.append(paths)
