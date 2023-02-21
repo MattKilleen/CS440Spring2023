@@ -128,6 +128,41 @@ def forward_a_star_walk(true_maze):
     total_expand += expanded
     return True, actual_path, total_expand
 
+def adaptive_a_star_walk(true_maze):
+
+    total_expand = 0
+    known_maze = Maze(rows, cols, 0, true_maze.agent_row, true_maze.agent_col, true_maze.goal_row, true_maze.goal_col)
+    current_position = [true_maze.agent_row, true_maze.agent_col]
+    goal_position = [true_maze.goal_row, true_maze.goal_col]
+    actual_path = [MazeEntry(current_position[0], current_position[1], "0")]
+    success, planned_path, expanded = forward_a_star(current_position, goal_position, known_maze)
+
+    total_expand += expanded
+    if not success:
+        return False, [], total_expand
+
+    # Iterate until the goal has been reached
+    while not (current_position[0] == true_maze.goal_row and current_position[1] == true_maze.goal_col):
+
+        newWallFound = update_adjacent_spaces(current_position, true_maze, known_maze)
+        success, planned_path, expanded = forward_a_star(current_position, goal_position, known_maze)
+        if not success:
+            total_expand += expanded
+            return False, [], total_expand
+
+        # Remove the current element of the planned path and update the current position of the agent for the next iteration
+        planned_path.remove(planned_path[0])
+        current_position[0] = planned_path[0].row
+        current_position[1] = planned_path[0].col
+
+        # Add the updated current position of the agent to the actual path
+        actual_path.append(MazeEntry(current_position[0], current_position[1], "0"))
+
+    # If we break from the while loop (the agent reached the goal), return true, indicating success,
+    # and the actual path followed by the agent
+    total_expand += expanded
+    return True, actual_path, total_expand
+
 def backwards_a_star_walk(true_maze):
     # In addition to the true maze which we are to navigate though, create a known_maze,
     # representing the maze as the agent knows it. The agent does not initially know the maze,
@@ -425,13 +460,14 @@ successes = 0
 orig_stdout = sys.stdout
 with open("mazes.txt", "w") as f:
     sys.stdout = f
-    for x in range(0, 10):
+    for x in range(0, 100):
         true_maze = Maze(rows, cols, wallProbability)
         print("\nMAZE " + str(x))
         print("START: (" + str(true_maze.agent_row) + ", " + str(true_maze.agent_col) + ")")
         print("GOAL: (" + str(true_maze.goal_row) + ", " + str(true_maze.goal_col) + ")\n")
         fsuccess, fpath, fexpand = forward_a_star_walk(true_maze)
         bsuccess, bpath, bexpand = backwards_a_star_walk(true_maze)
+        asuccess, apath, aexpand = adaptive_a_star_walk(true_maze)
         print("Was maze a success: " + str(fsuccess))
         print("\n(Forward)\n")
         printPath(true_maze, fpath)
@@ -439,12 +475,16 @@ with open("mazes.txt", "w") as f:
         print("\n(Backward)\n")
         printPath(true_maze, bpath)
         #print("Total Expanded Nodes: " + str(bexpand) + "\n")
-        print("Forward Expanded Nodes: " + str(fexpand) + " // Backward Expanded Nodes: " + str(bexpand) + "\n--------")
+        print("\n(Adaptive)\n")
+        printPath(true_maze, apath)
+        print("Forward Expanded Nodes: " + str(fexpand) + " // Backward Expanded Nodes: " + str(bexpand) +
+              " // Adaptive Expanded Nodes: " + str(aexpand) +"\n--------")
         #print("\n(Success: " + str(success) + ")\n\n--------")
-        if (fsuccess or bsuccess):
+        if (fsuccess or bsuccess or asuccess):
             successes += 1
         mazes.append(true_maze)
         paths.append(paths)
 
     print("\n\nSolved Mazes: " + str(successes))
     sys.stdout = orig_stdout
+    
