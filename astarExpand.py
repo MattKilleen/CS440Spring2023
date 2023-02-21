@@ -229,7 +229,6 @@ def forward_a_star(initial_position, goal_position, known_maze):
 
         # If this node has already been expanded, continue to the next iteration
         if expandedList.setdefault((x.row, x.col)) is not None:
-            print(expanded)
             continue
 
         # Add this node to the expanded list
