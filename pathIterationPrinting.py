@@ -107,7 +107,7 @@ def forward_a_star_walk_favor_high_g_values(true_maze):
         # Search for any new walls adjacent to the agent in the true maze and update the known_maze
         newWallFound = update_adjacent_spaces(current_position, true_maze, known_maze)
         print("-" * 100)
-        printPath(known_maze, planned_path)
+        printPath(known_maze, actual_path)
         print("-" * 100)
 
         # If a new wall was found, use A* search to regenerate the planned path based on the new state of the known_maze
@@ -115,7 +115,7 @@ def forward_a_star_walk_favor_high_g_values(true_maze):
         if newWallFound:
             success, planned_path, expanded = forward_a_star_favor_high_g_values(current_position, goal_position, known_maze)
             print("-" * 100)
-            printPath(known_maze, planned_path)
+            printPath(known_maze, actual_path)
             print("-" * 100)
             if not success:
                 total_expand += expanded
@@ -168,7 +168,7 @@ def forward_a_star_walk_favor_low_g_values(true_maze):
         # Search for any new walls adjacent to the agent in the true maze and update the known_maze
         newWallFound = update_adjacent_spaces(current_position, true_maze, known_maze)
         print("-" * 100)
-        printPath(known_maze, planned_path)
+        printPath(known_maze, actual_path)
         print("-" * 100)
 
         # If a new wall was found, use A* search to regenerate the planned path based on the new state of the known_maze
@@ -176,7 +176,7 @@ def forward_a_star_walk_favor_low_g_values(true_maze):
         if newWallFound:
             success, planned_path, expanded = forward_a_star_favor_low_g_values(current_position, goal_position, known_maze)
             print("-" * 100)
-            printPath(known_maze, planned_path)
+            printPath(known_maze, actual_path)
             print("-" * 100)
             if not success:
                 total_expand += expanded
@@ -213,7 +213,7 @@ def adaptive_a_star_walk(true_maze):
         # Search for any new walls adjacent to the agent in the true maze and update the known_maze
         newWallFound = update_adjacent_spaces(current_position, true_maze, known_maze)
         print("-" * 100)
-        printPath(known_maze, planned_path)
+        printPath(known_maze, actual_path)
         print("-" * 100)
 
         # If a new wall was found, use A* search to regenerate the planned path based on the new state of the known_maze
@@ -221,7 +221,7 @@ def adaptive_a_star_walk(true_maze):
         if newWallFound:
             success, planned_path, expanded = adaptive_a_star(current_position, goal_position, known_maze)
             print("-" * 100)
-            printPath(known_maze, planned_path)
+            printPath(known_maze, actual_path)
             print("-" * 100)
             if not success:
                 total_expand += expanded
@@ -273,7 +273,7 @@ def backwards_a_star_walk(true_maze):
         # Search for any new walls adjacent to the agent in the true maze and update the known_maze
         newWallFound = update_adjacent_spaces(goal_position, true_maze, known_maze)
         print("-" * 100)
-        printPath(known_maze, planned_path)
+        printPath(known_maze, actual_path)
         print("-" * 100)
 
         # If a new wall was found, use A* search to regenerate the planned path based on the new state of the known_maze
@@ -282,7 +282,7 @@ def backwards_a_star_walk(true_maze):
             try:
                 success, planned_path, expanded = backwards_a_star(current_position, goal_position, known_maze)
                 print("-" * 100)
-                printPath(known_maze, planned_path)
+                printPath(known_maze, actual_path)
                 print("-" * 100)
             except:
                 pass
@@ -671,8 +671,8 @@ def printPath(maze, path):
         print(i)
 
 
-rows = 15
-cols = 30
+rows = int(input("How many rows do you want in the maze?: "))
+cols = int(input("How many columns do you want in the maze?: "))
 wallProbability = 0.25
 
 # true_maze = Maze(rows, cols, wallProbability)
@@ -694,7 +694,7 @@ mazes = []
 paths = []
 
 successes = 0
-total_mazes = 1000
+total_mazes = int (input("How many mazes do you want?: "))
 
 total_fhexpand = 0
 total_flexpand = 0
