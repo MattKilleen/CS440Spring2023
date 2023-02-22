@@ -715,31 +715,40 @@ with open("mazes.txt", "w") as f:
         print("\nMAZE " + str(x))
         print("START: (" + str(true_maze.agent_row) + ", " + str(true_maze.agent_col) + ")")
         print("GOAL: (" + str(true_maze.goal_row) + ", " + str(true_maze.goal_col) + ")\n")
+
         fhstart_time = time.time()
+        print("\n(Forward Favoring High G Values)\n")
         fhsuccess, fhpath, fhexpand = forward_a_star_walk_favor_high_g_values(true_maze)
+        print("\n(Forward Favoring High G Values Final Path)\n")
+        printPath(true_maze, fhpath)
         total_fhtime += time.time() - fhstart_time
         total_fhexpand += fhexpand
+
         flstart_time = time.time()
+        print("\n(Forward Favoring Low G Values)\n")
         flsuccess, flpath, flexpand = forward_a_star_walk_favor_low_g_values(true_maze)
+        print("\n(Forward Favoring Low G Values Final Path)\n")
+        printPath(true_maze, flpath)
         total_fltime += time.time() - flstart_time
         total_flexpand += flexpand
+
         bstart_time = time.time()
+        print("\n(Backward)\n")
         bsuccess, bpath, bexpand = backwards_a_star_walk(true_maze)
+        print("\n(Backward Final Path)\n")
+        printPath(true_maze, bpath)
         total_btime += time.time() - bstart_time
         total_bexpand += bexpand
+
         astart_time = time.time()
+        print("\n(Adaptive)\n")
         asuccess, apath, aexpand = adaptive_a_star_walk(true_maze)
+        print("\n(Adaptive Final Path)\n")
+        printPath(true_maze, apath)
         total_atime += time.time() - astart_time
         total_aexpand += aexpand
+
         print("Was maze a success: " + str(fhsuccess))
-        print("\n(Forward Favoring High G Values)\n")
-        printPath(true_maze, fhpath)
-        print("\n(Forward Favoring Low G Values)\n")
-        printPath(true_maze, flpath)
-        print("\n(Backward)\n")
-        printPath(true_maze, bpath)
-        print("\n(Adaptive)\n")
-        printPath(true_maze, apath)
         print("Forward Expanded Nodes (Favoring High G Values): " + str(fhexpand) +
               " // Forward Expanded Nodes (Favoring Low G Values): " + str(flexpand) +
               " \nBackward Expanded Nodes: " + str(bexpand) +
