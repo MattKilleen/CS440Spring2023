@@ -95,6 +95,10 @@ def forward_a_star_walk_favor_high_g_values(true_maze):
 
     # Use A* search to generate a planned path to the goal based on the current state of the known_maze
     success, planned_path, expanded = forward_a_star_favor_high_g_values(current_position, goal_position, known_maze)
+    print("-" * 100)
+    print("Initial Planned Path:")
+    printPath(known_maze, planned_path)
+    print("-" * 100)
 
     total_expand += expanded
 
@@ -106,16 +110,14 @@ def forward_a_star_walk_favor_high_g_values(true_maze):
     while not (current_position[0] == true_maze.goal_row and current_position[1] == true_maze.goal_col):
         # Search for any new walls adjacent to the agent in the true maze and update the known_maze
         newWallFound = update_adjacent_spaces(current_position, true_maze, known_maze)
-        print("-" * 100)
-        printPath(known_maze, actual_path)
-        print("-" * 100)
 
         # If a new wall was found, use A* search to regenerate the planned path based on the new state of the known_maze
         # If no path can be found, return false, indicating failure, and an empty list
         if newWallFound:
             success, planned_path, expanded = forward_a_star_favor_high_g_values(current_position, goal_position, known_maze)
             print("-" * 100)
-            printPath(known_maze, actual_path)
+            print("Blocked Cell Found - Replanned Path:")
+            printPath(known_maze, actual_path + planned_path)
             print("-" * 100)
             if not success:
                 total_expand += expanded
@@ -156,6 +158,10 @@ def forward_a_star_walk_favor_low_g_values(true_maze):
 
     # Use A* search to generate a planned path to the goal based on the current state of the known_maze
     success, planned_path, expanded = forward_a_star_favor_low_g_values(current_position, goal_position, known_maze)
+    print("-" * 100)
+    print("Initial Planned Path:")
+    printPath(known_maze, planned_path)
+    print("-" * 100)
 
     total_expand += expanded
 
@@ -167,16 +173,14 @@ def forward_a_star_walk_favor_low_g_values(true_maze):
     while not (current_position[0] == true_maze.goal_row and current_position[1] == true_maze.goal_col):
         # Search for any new walls adjacent to the agent in the true maze and update the known_maze
         newWallFound = update_adjacent_spaces(current_position, true_maze, known_maze)
-        print("-" * 100)
-        printPath(known_maze, actual_path)
-        print("-" * 100)
 
         # If a new wall was found, use A* search to regenerate the planned path based on the new state of the known_maze
         # If no path can be found, return false, indicating failure, and an empty list
         if newWallFound:
             success, planned_path, expanded = forward_a_star_favor_low_g_values(current_position, goal_position, known_maze)
             print("-" * 100)
-            printPath(known_maze, actual_path)
+            print("Blocked Cell Found - Replanned Path:")
+            printPath(known_maze, actual_path + planned_path)
             print("-" * 100)
             if not success:
                 total_expand += expanded
@@ -203,6 +207,10 @@ def adaptive_a_star_walk(true_maze):
     goal_position = [true_maze.goal_row, true_maze.goal_col]
     actual_path = [MazeEntry(current_position[0], current_position[1], "0")]
     success, planned_path, expanded = adaptive_a_star(current_position, goal_position, known_maze)
+    print("-" * 100)
+    print("Initial Planned Path:")
+    printPath(known_maze, planned_path)
+    print("-" * 100)
 
     total_expand += expanded
     if not success:
@@ -212,16 +220,14 @@ def adaptive_a_star_walk(true_maze):
     while not (current_position[0] == true_maze.goal_row and current_position[1] == true_maze.goal_col):
         # Search for any new walls adjacent to the agent in the true maze and update the known_maze
         newWallFound = update_adjacent_spaces(current_position, true_maze, known_maze)
-        print("-" * 100)
-        printPath(known_maze, actual_path)
-        print("-" * 100)
 
         # If a new wall was found, use A* search to regenerate the planned path based on the new state of the known_maze
         # If no path can be found, return false, indicating failure, and an empty list
         if newWallFound:
             success, planned_path, expanded = adaptive_a_star(current_position, goal_position, known_maze)
             print("-" * 100)
-            printPath(known_maze, actual_path)
+            print("Blocked Cell Found - Replanned Path:")
+            printPath(known_maze, actual_path + planned_path)
             print("-" * 100)
             if not success:
                 total_expand += expanded
@@ -261,6 +267,10 @@ def backwards_a_star_walk(true_maze):
 
     # Use A* search to generate a planned path to the goal based on the current state of the known_maze
     success, planned_path, expanded = backwards_a_star(current_position, goal_position, known_maze)
+    print("-" * 100)
+    print("Initial Planned Path:")
+    printPath(known_maze, planned_path)
+    print("-" * 100)
 
     total_expand += expanded
 
@@ -272,9 +282,6 @@ def backwards_a_star_walk(true_maze):
     while not (goal_position[0] == true_maze.agent_row and goal_position[1] == true_maze.agent_col):
         # Search for any new walls adjacent to the agent in the true maze and update the known_maze
         newWallFound = update_adjacent_spaces(goal_position, true_maze, known_maze)
-        print("-" * 100)
-        printPath(known_maze, actual_path)
-        print("-" * 100)
 
         # If a new wall was found, use A* search to regenerate the planned path based on the new state of the known_maze
         # If no path can be found, return false, indicating failure, and an empty list
@@ -282,7 +289,8 @@ def backwards_a_star_walk(true_maze):
             try:
                 success, planned_path, expanded = backwards_a_star(current_position, goal_position, known_maze)
                 print("-" * 100)
-                printPath(known_maze, actual_path)
+                print("Blocked Cell Found - Replanned Path:")
+                printPath(known_maze, actual_path + planned_path)
                 print("-" * 100)
             except:
                 pass
